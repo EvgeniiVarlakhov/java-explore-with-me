@@ -57,7 +57,8 @@ public class Client extends BaseClient {
         return get("/stats?start={start}&end={end}&unique={unique}", parameters);
     }
 
-    public ResponseEntity<Object> getStatsListWithAllParam(String startTime, String endTime, ArrayList<String> uris, String unique) {
+    public ResponseEntity<Object> getStatsListWithAllParam(
+            String startTime, String endTime, ArrayList<String> uris, String unique) {
         int i = 0;
         String uriParams = "";
         Map<String, Object> parameters = Map.of(

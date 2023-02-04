@@ -30,7 +30,8 @@ public interface StatsRepository extends JpaRepository<Stat, Long> {
             "WHERE s.timeStamp BETWEEN ?1 AND ?2 AND s.uri IN ?3 " +
             "GROUP BY s.app, s.uri " +
             "ORDER BY COUNT (s.ip)DESC ")
-    Collection<ViewStatsDto> findAllStatsByTimeAndIpAndListOfUris(LocalDateTime star, LocalDateTime end, List<String> uris);
+    Collection<ViewStatsDto> findAllStatsByTimeAndIpAndListOfUris(
+            LocalDateTime star, LocalDateTime end, List<String> uris);
 
     @Query("SELECT new ru.practicum.ViewStatsDto(s.app, s.uri, COUNT (s.ip))" +
             "FROM Stat AS s " +

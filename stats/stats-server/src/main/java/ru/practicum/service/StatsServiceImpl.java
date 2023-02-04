@@ -33,7 +33,8 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
-    public Collection<ViewStatsDto> getStatsWithParams(String start, String end, ArrayList<String> uris, String unique) {
+    public Collection<ViewStatsDto> getStatsWithParams(
+            String start, String end, ArrayList<String> uris, String unique) {
         LocalDateTime startTime = validateTimeFormat(start);
         LocalDateTime endTime = validateTimeFormat(end);
         validateUniqueParam(unique);
