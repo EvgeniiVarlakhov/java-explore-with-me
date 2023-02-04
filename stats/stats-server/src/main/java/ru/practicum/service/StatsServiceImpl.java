@@ -37,13 +37,16 @@ public class StatsServiceImpl implements StatsService {
             String start, String end, ArrayList<String> uris, String unique) {
         LocalDateTime startTime = validateTimeFormat(start);
         LocalDateTime endTime = validateTimeFormat(end);
-        validateUniqueParam(unique);
+        Boolean status = validateUniqueParam(unique);
         Collection<ViewStatsDto> viewStatsDtos;
-        if (unique.equals("true") & uris != null) {
-            viewStatsDtos = statsRepository.findAllStatsByTimeAndIpAndListOfUris(startTime, endTime, uris);
-        } else if (unique.equals("false") & uris != null) {
-            viewStatsDtos = statsRepository.findAllStatsByTimeAndListOfUris(startTime, endTime, uris);
-        } else if (unique.equals("true")) {
+
+        if (uris != null) {
+            if (status) {
+                viewStatsDtos = statsRepository.findAllStatsByTimeAndIpAndListOfUris(startTime, endTime, uris);
+            } else {
+                viewStatsDtos = statsRepository.findAllStatsByTimeAndListOfUris(startTime, endTime, uris);
+            }
+        } else if (status) {
             viewStatsDtos = statsRepository.findAllStatsByTimeAndUniqueIp(startTime, endTime);
         } else {
             viewStatsDtos = statsRepository.findAllStatsByStartAndEndTime(startTime, endTime);
@@ -62,12 +65,12 @@ public class StatsServiceImpl implements StatsService {
         return checkTime;
     }
 
-    private void validateUniqueParam(String param) {
+    private Boolean validateUniqueParam(String param) {
         switch (param) {
             case "true":
-                break;
+                return Boolean.TRUE;
             case "false":
-                break;
+                return Boolean.FALSE;
             default:
                 throw new InvalidValidationException("Значение параметра unique должно быть true/false.");
         }
