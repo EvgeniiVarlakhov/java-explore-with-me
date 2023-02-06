@@ -15,14 +15,14 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 public class StatsDtoIn {
     @NotNull(message = "Следует указать app.")
-    String app;
+    private String app;
 
     @NotNull(message = "Следует указать uri.")
-    String uri;
+    private String uri;
 
     @NotNull(message = "Следует указать ip.")
-    String ip;
+    private String ip;
 
     @NotNull(message = "Следует указать timestamp.")
-    String timestamp;
+    private String timestamp;
 }

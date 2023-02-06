@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.Constant;
 import ru.practicum.StatsDtoIn;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.exception.InvalidValidationException;
@@ -23,7 +24,6 @@ import java.util.Collection;
 @RequiredArgsConstructor
 public class StatsServiceImpl implements StatsService {
     private final StatsRepository statsRepository;
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Transactional
     @Override
@@ -58,9 +58,9 @@ public class StatsServiceImpl implements StatsService {
     private LocalDateTime validateTimeFormat(String time) {
         LocalDateTime checkTime;
         try {
-            checkTime = LocalDateTime.parse(time, formatter);
+            checkTime = LocalDateTime.parse(time, DateTimeFormatter.ofPattern(Constant.TIME_FORMAT));
         } catch (DateTimeParseException ex) {
-            throw new InvalidValidationException("Время должно быть указано в формате \"yyyy-MM-dd HH:mm:ss\".");
+            throw new InvalidValidationException("Время должно быть указано в формате: " + Constant.TIME_FORMAT + ".");
         }
         return checkTime;
     }

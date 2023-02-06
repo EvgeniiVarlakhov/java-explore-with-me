@@ -29,7 +29,7 @@ public class StatsController {
             @RequestParam(value = "start") String start,
             @RequestParam(value = "end") String end,
             @RequestParam(value = "uris", required = false) ArrayList<String> uris,
-            @RequestParam(value = "unique", defaultValue = "false", required = false) String unique) {
+            @RequestParam(value = "unique", defaultValue = "false") String unique) {
         return statsService.getStatsWithParams(start, end, uris, unique);
     }
 

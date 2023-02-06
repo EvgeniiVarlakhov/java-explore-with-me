@@ -28,15 +28,15 @@ public class Stat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column
-    String app;
+    @Column(length = 512)
+    private String app;
 
-    @Column
-    String uri;
+    @Column(length = 512)
+    private String uri;
 
-    @Column
-    String ip;
+    @Column(length = 512)
+    private String ip;
 
     @Column(name = "time_stamp")
-    LocalDateTime timeStamp;
+    private LocalDateTime timeStamp;
 }
