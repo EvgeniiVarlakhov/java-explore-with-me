@@ -135,7 +135,7 @@ public class RequestServiceImpl implements RequestService {
         for (int reqId : updateRequest.getRequestIds()) {
             int limit = 0;
             for (Request request : requests) {
-                if (request.getId() == reqId & request.getStatus().equals(RequestState.PENDING)) {
+                if (request.getId() == reqId && request.getStatus().equals(RequestState.PENDING)) {
                     switch (requestState) {
                         case REJECTED:
                             request.setStatus(RequestState.REJECTED);
