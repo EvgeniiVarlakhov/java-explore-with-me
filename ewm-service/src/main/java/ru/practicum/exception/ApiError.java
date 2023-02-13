@@ -1,13 +1,14 @@
 package ru.practicum.exception;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @AllArgsConstructor
-public class ErrorResponse {
+@NoArgsConstructor
+@ToString
+@EqualsAndHashCode
+public class ApiError {
     private StackTraceElement[] errors;
     private String status;
     private String reason;

@@ -1,18 +1,15 @@
 package ru.practicum.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.practicum.StatsDtoIn;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.service.StatsService;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 @Validated
 @RestController
@@ -25,7 +22,7 @@ public class StatsController {
     }
 
     @GetMapping("/stats")
-    public Collection<ViewStatsDto> getStatsWithParams(
+    public List<ViewStatsDto> getStatsWithParams(
             @RequestParam(value = "start") String start,
             @RequestParam(value = "end") String end,
             @RequestParam(value = "uris", required = false) ArrayList<String> uris,
@@ -34,6 +31,7 @@ public class StatsController {
     }
 
     @PostMapping("/hit")
+    @ResponseStatus(HttpStatus.CREATED)
     public void createHit(@RequestBody StatsDtoIn statsDtoIn) {
         statsService.createStat(statsDtoIn);
     }
