@@ -1,10 +1,9 @@
 package ru.practicum.event.comparator;
 
-import ru.practicum.Constant;
+import ru.practicum.constant.MainConstant;
 import ru.practicum.event.dto.EventShortDto;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 
 public class EventDataComparator implements Comparator<EventShortDto> {
@@ -14,12 +13,12 @@ public class EventDataComparator implements Comparator<EventShortDto> {
         int i;
         LocalDateTime dateFirst = LocalDateTime.parse(
                 o1.getEventDate(),
-                DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)
+                MainConstant.FORMATTER
         );
 
         LocalDateTime dateSecond = LocalDateTime.parse(
                 o2.getEventDate(),
-                DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)
+                MainConstant.FORMATTER
         );
 
         if (dateFirst.isBefore(dateSecond)) {

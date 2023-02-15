@@ -67,7 +67,8 @@ public class RequestServiceImpl implements RequestService {
             throw new ObjectNotFoundException("Запроса с ID = " + requestId + " не существует.");
         }
         if (request.get().getRequester().getId() != userId) {
-            throw new ObjectNotFoundException("У пользователя с ID = " + userId + " нет запроса с ID = " + requestId + ".");
+            throw new ObjectNotFoundException(
+                    "У пользователя с ID = " + userId + " нет запроса с ID = " + requestId + ".");
         }
         request.get().setStatus(RequestState.CANCELED);
         log.info("Запрос пользователя ID = {} отменен.", userId);

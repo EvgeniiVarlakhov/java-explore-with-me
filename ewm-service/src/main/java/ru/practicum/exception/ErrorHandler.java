@@ -4,15 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import ru.practicum.Constant;
+import ru.practicum.constant.MainConstant;
 
 import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 @RestControllerAdvice
@@ -27,18 +27,18 @@ public class ErrorHandler {
                 HttpStatus.BAD_REQUEST.toString(),
                 "Ошибка валидации",
                 e.getMessage(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+                LocalDateTime.now().format(MainConstant.FORMATTER));
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleException(final Exception e) {
-        log.error("400 {}", e.getMessage(), e);
+        log.error("500 {}", e.getMessage(), e);
         return new ApiError(e.getStackTrace(),
-                HttpStatus.BAD_REQUEST.toString(),
+                HttpStatus.INTERNAL_SERVER_ERROR.toString(),
                 e.toString(),
                 "Произошла непредвиденная ошибка.",
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+                LocalDateTime.now().format(MainConstant.FORMATTER));
     }
 
     @ExceptionHandler
@@ -49,7 +49,7 @@ public class ErrorHandler {
                 HttpStatus.BAD_REQUEST.toString(),
                 e.toString(),
                 e.getMessage(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+                LocalDateTime.now().format(MainConstant.FORMATTER));
     }
 
     @ExceptionHandler
@@ -60,7 +60,7 @@ public class ErrorHandler {
                 HttpStatus.CONFLICT.toString(),
                 e.toString(),
                 e.getMessage(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+                LocalDateTime.now().format(MainConstant.FORMATTER));
     }
 
     @ExceptionHandler
@@ -71,7 +71,7 @@ public class ErrorHandler {
                 HttpStatus.BAD_REQUEST.toString(),
                 e.toString(),
                 Objects.requireNonNull(e.getFieldError()).getDefaultMessage(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+                LocalDateTime.now().format(MainConstant.FORMATTER));
     }
 
     @ExceptionHandler
@@ -82,7 +82,7 @@ public class ErrorHandler {
                 HttpStatus.BAD_REQUEST.toString(),
                 "Incorrectly made request",
                 e.getMessage(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+                LocalDateTime.now().format(MainConstant.FORMATTER));
     }
 
     @ExceptionHandler
@@ -93,7 +93,7 @@ public class ErrorHandler {
                 HttpStatus.NOT_FOUND.toString(),
                 "The required object was not found",
                 e.getMessage(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+                LocalDateTime.now().format(MainConstant.FORMATTER));
     }
 
     @ExceptionHandler
@@ -104,7 +104,7 @@ public class ErrorHandler {
                 HttpStatus.CONFLICT.toString(),
                 "Incorrect made request.",
                 e.getMessage(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+                LocalDateTime.now().format(MainConstant.FORMATTER));
     }
 
     @ExceptionHandler
@@ -115,7 +115,18 @@ public class ErrorHandler {
                 HttpStatus.CONFLICT.toString(),
                 "Incorrect made request.",
                 e.getMessage(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+                LocalDateTime.now().format(MainConstant.FORMATTER));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleMissingServletRequestParameterException(final MissingServletRequestParameterException e) {
+        log.error("400 {}", e.getMessage(), e);
+        return new ApiError(null,
+                HttpStatus.BAD_REQUEST.toString(),
+                "Отсутствует обязательный параметр запроса.",
+                e.getMessage(),
+                LocalDateTime.now().format(MainConstant.FORMATTER));
     }
 
 }

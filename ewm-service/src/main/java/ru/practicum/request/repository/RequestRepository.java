@@ -7,6 +7,7 @@ import ru.practicum.request.model.Request;
 import ru.practicum.user.model.User;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface RequestRepository extends JpaRepository<Request, Integer> {
 
@@ -15,5 +16,7 @@ public interface RequestRepository extends JpaRepository<Request, Integer> {
     Collection<Request> findAllByEventAndStatus(Event event, RequestState requestState);
 
     Collection<Request> findAllByEvent(Event event);
+
+    Collection<Request> findAllByEventInAndStatus(List<Event> eventList, RequestState requestState);
 
 }

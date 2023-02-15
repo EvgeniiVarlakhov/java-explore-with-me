@@ -1,6 +1,6 @@
 package ru.practicum.compilation;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -15,13 +15,9 @@ import java.util.Collection;
 
 @RestController
 @Validated
+@RequiredArgsConstructor
 public class CompController {
     private final CompService service;
-
-    @Autowired
-    public CompController(CompService service) {
-        this.service = service;
-    }
 
     @GetMapping("/compilations")
     public Collection<CompilationDto> getAllCompilations(
@@ -44,7 +40,7 @@ public class CompController {
     }
 
     @PatchMapping("/admin/compilations/{compId}")
-    public CompilationDto udateCompilationByAdmin(
+    public CompilationDto updateCompilationByAdmin(
             @PathVariable int compId,
             @RequestBody UpdateCompilationRequest updateComp) {
         return service.updateCompByAdmin(compId, updateComp);

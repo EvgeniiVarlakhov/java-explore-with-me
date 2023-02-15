@@ -1,9 +1,5 @@
 package ru.practicum.event.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import com.querydsl.core.types.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,11 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.Constant;
 import ru.practicum.StatsDtoIn;
-import ru.practicum.ViewStatsDto;
 import ru.practicum.category.model.Category;
 import ru.practicum.category.repository.CategoryRepository;
+import ru.practicum.constant.MainConstant;
 import ru.practicum.controller.ClientController;
 import ru.practicum.event.*;
 import ru.practicum.event.comparator.EventDataComparator;
@@ -44,7 +39,6 @@ import ru.practicum.user.repository.UserRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
@@ -57,9 +51,8 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final CategoryRepository categoryRepository;
     private final ClientController clientController;
-    private final ObjectMapper objectMapper;
-    private final Gson gson;
     private final RequestRepository requestRepository;
+    private final EventStatsService statsService;
     private final QEvent qEvent = QEvent.event;
 
     @Transactional
@@ -71,7 +64,9 @@ public class EventServiceImpl implements EventService {
         Event createEvent = EventMapper.mapToNewEvent(user, newEventDto, category);
         eventRepository.save(createEvent);
         log.info("Создано новое событие: {}", createEvent);
-        return EventMapper.mapToFullDtoFromEvent(createEvent, 0);
+        EventFullDto fullDto = EventMapper.mapToFullDtoFromEvent(createEvent, 0);
+        fullDto.setViews(0);
+        return fullDto;
     }
 
     @Override
@@ -79,10 +74,12 @@ public class EventServiceImpl implements EventService {
         validateUser(userId);
         Pageable pageable = PageRequest.of(from / size, size);
         Collection<Event> events = eventRepository.findAllUsersEvents(userId, pageable).getContent();
-        Collection<EventShortDto> shortDtos = new ArrayList<>();
-        for (Event event : events) {
-            Collection<Request> confirmList = requestRepository.findAllByEventAndStatus(event, RequestState.CONFIRMED);
-            shortDtos.add(EventMapper.mapToShortDto(event, confirmList.size()));
+        Collection<Request> confirmList = requestRepository.findAllByEventInAndStatus(
+                List.copyOf(events),
+                RequestState.CONFIRMED);
+        List<EventShortDto> shortDtos = EventMapper.getListOfEventShortDto(List.copyOf(events), confirmList);
+        for (EventShortDto dto : shortDtos) {
+            dto.setViews(statsService.getStatViewEvents(dto.getId()));
         }
         log.info("Получен список событий пользователя ID = {}", userId);
         return shortDtos;
@@ -94,7 +91,9 @@ public class EventServiceImpl implements EventService {
         Event event = validateEvent(eventId, userId);
         Collection<Request> confirmList = requestRepository.findAllByEventAndStatus(event, RequestState.CONFIRMED);
         log.info("Получено событие ID = {}.{}", eventId, event);
-        return EventMapper.mapToFullDtoFromEvent(event, confirmList.size());
+        EventFullDto fullDto = EventMapper.mapToFullDtoFromEvent(event, confirmList.size());
+        fullDto.setViews(statsService.getStatViewEvents(eventId));
+        return fullDto;
     }
 
     @Transactional
@@ -126,7 +125,9 @@ public class EventServiceImpl implements EventService {
         Event newEvent = eventRepository.save(EventMapper.mapUpdateEvent(oldEvent, updateEvent));
         Collection<Request> confirmList = requestRepository.findAllByEventAndStatus(newEvent, RequestState.CONFIRMED);
         log.info("Событие ID = {} обновлено. {}", eventId, newEvent);
-        return EventMapper.mapToFullDtoFromEvent(newEvent, confirmList.size());
+        EventFullDto fullDto = EventMapper.mapToFullDtoFromEvent(newEvent, confirmList.size());
+        fullDto.setViews(statsService.getStatViewEvents(eventId));
+        return fullDto;
     }
 
     @Transactional
@@ -151,7 +152,9 @@ public class EventServiceImpl implements EventService {
         Event newEvent = eventRepository.save(EventMapper.mapUpdateEventByAdmin(updateEvent, updateEventAdminRequest));
         Collection<Request> confirmList = requestRepository.findAllByEventAndStatus(newEvent, RequestState.CONFIRMED);
         log.info("Событие ID = {} обновлено. {}", eventId, newEvent);
-        return EventMapper.mapToFullDtoFromEvent(newEvent, confirmList.size());
+        EventFullDto fullDto = EventMapper.mapToFullDtoFromEvent(newEvent, confirmList.size());
+        fullDto.setViews(statsService.getStatViewEvents(eventId));
+        return fullDto;
     }
 
     @Override
@@ -167,14 +170,12 @@ public class EventServiceImpl implements EventService {
                 "ewm-main-service",
                 request.getRequestURI(),
                 request.getRemoteAddr(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT))
+                LocalDateTime.now().format(MainConstant.FORMATTER)
         );
         saveStat(statsDtoIn);
         Collection<Request> confReqs = requestRepository.findAllByEventAndStatus(event.get(), RequestState.CONFIRMED);
         EventFullDto eventDto = EventMapper.mapToFullDtoFromEvent(event.get(), confReqs.size());
-        ArrayList<String> uris = new ArrayList<>();
-        uris.add(request.getRequestURI());
-        eventDto.setViews(getStatView(uris));
+        eventDto.setViews(statsService.getStatViewEvents(event.get().getId()));
         log.info("Получено событие ID = {}. {}", id, eventDto);
         return eventDto;
     }
@@ -217,14 +218,20 @@ public class EventServiceImpl implements EventService {
                 .buildAnd();
         Collection<Event> eventsList = eventRepository.findAll(predicate, pageable).getContent();
         Collection<EventFullDto> result = new ArrayList<>();
-        ArrayList<String> uris = new ArrayList<>();
+        Collection<Request> confirmList = requestRepository.findAllByEventInAndStatus(
+                List.copyOf(eventsList),
+                RequestState.CONFIRMED);
+        int confirm;
         for (Event event : eventsList) {
-            Collection<Request> requests = requestRepository.findAllByEventAndStatus(event, RequestState.CONFIRMED);
-            uris.add("/events/" + event.getId());
-            EventFullDto eventFullDto = EventMapper.mapToFullDtoFromEvent(event, getStatView(uris));
-            eventFullDto.setConfirmedRequests(requests.size());
+            confirm = 0;
+            for (Request request : confirmList) {
+                if (request.getEvent().getId() == event.getId()) {
+                    confirm++;
+                }
+            }
+            EventFullDto eventFullDto = EventMapper.mapToFullDtoFromEvent(event, confirm);
+            eventFullDto.setViews(statsService.getStatViewEvents(event.getId()));
             result.add(eventFullDto);
-            uris.clear();
         }
         log.info("Получен списак событий для Админ размером : {}", result.size());
         return result;
@@ -265,7 +272,7 @@ public class EventServiceImpl implements EventService {
                 "ewm-main-service",
                 request.getRequestURI(),
                 request.getRemoteAddr(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT))
+                LocalDateTime.now().format(MainConstant.FORMATTER)
         );
         saveStat(statsDtoIn);
         Predicate predicate = QPredicates.builder()
@@ -279,20 +286,20 @@ public class EventServiceImpl implements EventService {
 
         Collection<Event> eventsList = eventRepository.findAll(predicate, pageable).getContent();
         List<EventShortDto> result = new ArrayList<>();
-        ArrayList<String> uris = new ArrayList<>();
+        Collection<Request> confirmList = requestRepository.findAllByEventInAndStatus(
+                List.copyOf(eventsList),
+                RequestState.CONFIRMED);
+        int confirm;
         for (Event event : eventsList) {
-            uris.add(request.getRequestURI() + "/" + event.getId());
-            Collection<Request> requests = requestRepository.findAllByEventAndStatus(event, RequestState.CONFIRMED);
-            EventShortDto eventShortDto = EventMapper.mapToShortDto(event, getStatView(uris));
-            eventShortDto.setConfirmedRequests(requests.size());
-            if (param.getOnlyAvailable()) {
-                if (event.getParticipantLimit() > eventShortDto.getConfirmedRequests()) {
-                    result.add(eventShortDto);
+            confirm = 0;
+            for (Request req : confirmList) {
+                if (req.getEvent().getId() == event.getId()) {
+                    confirm++;
                 }
-            } else {
-                result.add(eventShortDto);
             }
-            uris.clear();
+            EventShortDto eventShortDto = EventMapper.mapToShortDto(event, confirm);
+            eventShortDto.setViews(statsService.getStatViewEvents(event.getId()));
+            result.add(eventShortDto);
         }
 
         if (param.getSort() != null) {
@@ -348,9 +355,10 @@ public class EventServiceImpl implements EventService {
     private LocalDateTime validateParamRange(String time) {
         LocalDateTime checkTime;
         try {
-            checkTime = LocalDateTime.parse(time, DateTimeFormatter.ofPattern(Constant.TIME_FORMAT));
+            checkTime = LocalDateTime.parse(time, MainConstant.FORMATTER);
         } catch (DateTimeParseException ex) {
-            throw new InvalidValidationException("Время должно быть указано в формате: " + Constant.TIME_FORMAT + ".");
+            throw new InvalidValidationException(
+                    "Время должно быть указано в формате: " + MainConstant.TIME_FORMAT + ".");
         }
         return checkTime;
     }
@@ -425,32 +433,6 @@ public class EventServiceImpl implements EventService {
             log.info("Статистика записана успешно.");
         } else {
             log.error("Статистика не записана.");
-        }
-    }
-
-    private int getStatView(ArrayList<String> uris) {
-        List<ViewStatsDto> list = new ArrayList<>();
-        ResponseEntity<Object> response = clientController.getList(
-                LocalDateTime.now().minusDays(100).format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)),
-                uris,
-                "false"
-        );
-        Object body = response.getBody();
-        String json = gson.toJson(body);
-        if (body != null) {
-            TypeReference<List<ViewStatsDto>> typeRef = new TypeReference<>() {
-            };
-            try {
-                list = objectMapper.readValue(json, typeRef);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        if (list.size() == 0) {
-            return 0;
-        } else {
-            return list.get(0).getHits().intValue();
         }
     }
 

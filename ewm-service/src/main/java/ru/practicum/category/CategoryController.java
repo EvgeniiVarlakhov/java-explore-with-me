@@ -1,6 +1,6 @@
 package ru.practicum.category;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -14,13 +14,9 @@ import java.util.Collection;
 
 @RestController
 @Validated
+@RequiredArgsConstructor
 public class CategoryController {
     private final CategoryService service;
-
-    @Autowired
-    public CategoryController(CategoryService service) {
-        this.service = service;
-    }
 
     @GetMapping("/categories")
     public Collection<CategoryDto> getAllCategories(

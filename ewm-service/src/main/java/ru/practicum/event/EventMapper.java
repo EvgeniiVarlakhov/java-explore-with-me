@@ -1,17 +1,23 @@
 package ru.practicum.event;
 
-import ru.practicum.Constant;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import ru.practicum.category.dto.CategoryDto;
 import ru.practicum.category.model.Category;
+import ru.practicum.constant.MainConstant;
 import ru.practicum.event.dto.*;
 import ru.practicum.event.enam.EventState;
 import ru.practicum.event.model.Event;
+import ru.practicum.request.model.Request;
 import ru.practicum.user.dto.UserShortDto;
 import ru.practicum.user.model.User;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EventMapper {
 
     public static Event mapToNewEvent(User user, NewEventDto newEventDto, Category category) {
@@ -21,7 +27,7 @@ public class EventMapper {
         newEvent.setCategory(category);
         newEvent.setDescription(newEventDto.getDescription());
         newEvent.setEventDate(
-                LocalDateTime.parse(newEventDto.getEventDate(), DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+                LocalDateTime.parse(newEventDto.getEventDate(), MainConstant.FORMATTER));
         newEvent.setInitiator(user);
         newEvent.setLat(newEventDto.getLocation().getLat());
         newEvent.setLon(newEventDto.getLocation().getLon());
@@ -38,21 +44,20 @@ public class EventMapper {
         fullDto.setAnnotation(event.getAnnotation());
         fullDto.setCategory(new CategoryDto(event.getCategory().getId(), event.getCategory().getName()));
         fullDto.setConfirmedRequests(request);
-        fullDto.setCreatedOn(event.getCreatedOn().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+        fullDto.setCreatedOn(event.getCreatedOn().format(MainConstant.FORMATTER));
         fullDto.setDescription(event.getDescription());
-        fullDto.setEventDate(event.getEventDate().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+        fullDto.setEventDate(event.getEventDate().format(MainConstant.FORMATTER));
         fullDto.setId(event.getId());
         fullDto.setInitiator(new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()));
         fullDto.setLocation(new Location(event.getLat(), event.getLon()));
         fullDto.setPaid(event.isPaid());
         fullDto.setParticipantLimit(event.getParticipantLimit());
         if (event.getPublishedOn() != null) {
-            fullDto.setPublishedOn(event.getPublishedOn().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+            fullDto.setPublishedOn(event.getPublishedOn().format(MainConstant.FORMATTER));
         }
         fullDto.setRequestModeration(event.isRequestModeration());
         fullDto.setState(event.getState().toString());
         fullDto.setTitle(event.getTitle());
-        fullDto.setViews(0);
         return fullDto;
     }
 
@@ -61,71 +66,91 @@ public class EventMapper {
         shortDto.setAnnotation(event.getAnnotation());
         shortDto.setCategory(new CategoryDto(event.getCategory().getId(), event.getCategory().getName()));
         shortDto.setConfirmedRequests(request);
-        shortDto.setEventDate(event.getEventDate().format(DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+        shortDto.setEventDate(event.getEventDate().format(MainConstant.FORMATTER));
         shortDto.setId(event.getId());
         shortDto.setInitiator(new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()));
         shortDto.setPaid(event.isPaid());
         shortDto.setTitle(event.getTitle());
-        shortDto.setViews(0);
         return shortDto;
     }
 
     public static Event mapUpdateEvent(Event event, UpdateEventUserRequest updateEvent) {
-        if (updateEvent.getAnnotation() != null) {
-            event.setAnnotation(updateEvent.getAnnotation());
-        }
-        if (updateEvent.getDescription() != null) {
-            event.setDescription(updateEvent.getDescription());
-        }
-        if (updateEvent.getEventDate() != null) {
-            event.setEventDate(LocalDateTime.parse(
-                    updateEvent.getEventDate(), DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
-        }
-        if (updateEvent.getLocation() != null) {
-            event.setLon(updateEvent.getLocation().getLon());
-            event.setLat(updateEvent.getLocation().getLat());
-        }
-        if (updateEvent.getPaid() != null) {
-            event.setPaid(updateEvent.getPaid());
-        }
-        if (updateEvent.getParticipantLimit() != null) {
-            event.setParticipantLimit(updateEvent.getParticipantLimit());
-        }
-        if (updateEvent.getRequestModeration() != null) {
-            event.setRequestModeration(updateEvent.getRequestModeration());
-        }
-        if (updateEvent.getTitle() != null) {
-            event.setTitle(updateEvent.getTitle());
-        }
-        return event;
+        return getEvent(
+                event,
+                updateEvent.getAnnotation(),
+                updateEvent.getDescription(),
+                updateEvent.getEventDate(),
+                updateEvent.getLocation(),
+                updateEvent.getPaid(),
+                updateEvent.getParticipantLimit(),
+                updateEvent.getRequestModeration(),
+                updateEvent.getTitle()
+        );
     }
 
     public static Event mapUpdateEventByAdmin(Event event, UpdateEventAdminRequest updateEvent) {
-        if (updateEvent.getAnnotation() != null) {
-            event.setAnnotation(updateEvent.getAnnotation());
+        return getEvent(event,
+                updateEvent.getAnnotation(),
+                updateEvent.getDescription(),
+                updateEvent.getEventDate(),
+                updateEvent.getLocation(),
+                updateEvent.getPaid(),
+                updateEvent.getParticipantLimit(),
+                updateEvent.getRequestModeration(),
+                updateEvent.getTitle()
+        );
+    }
+
+    public static List<EventShortDto> getListOfEventShortDto(List<Event> eventsList, Collection<Request> confRequests) {
+        List<EventShortDto> eventShortDtos = new ArrayList<>();
+        List<Request> confirmListForOne = new ArrayList<>();
+        for (Event event : eventsList) {
+            for (Request request : confRequests) {
+                if (request.getEvent().getId() == event.getId()) {
+                    confirmListForOne.add(request);
+                }
+            }
+            eventShortDtos.add(EventMapper.mapToShortDto(event, confirmListForOne.size()));
+            confirmListForOne.clear();
         }
-        if (updateEvent.getDescription() != null) {
-            event.setDescription(updateEvent.getDescription());
+        return eventShortDtos;
+    }
+
+    private static Event getEvent(
+            Event event,
+            String annotation,
+            String description,
+            String eventDate,
+            Location location,
+            Boolean paid,
+            Integer participantLimit,
+            Boolean requestModeration,
+            String title) {
+        if (annotation != null) {
+            event.setAnnotation(annotation);
         }
-        if (updateEvent.getEventDate() != null) {
+        if (description != null) {
+            event.setDescription(description);
+        }
+        if (eventDate != null) {
             event.setEventDate(LocalDateTime.parse(
-                    updateEvent.getEventDate(), DateTimeFormatter.ofPattern(Constant.TIME_FORMAT)));
+                    eventDate, MainConstant.FORMATTER));
         }
-        if (updateEvent.getLocation() != null) {
-            event.setLon(updateEvent.getLocation().getLon());
-            event.setLat(updateEvent.getLocation().getLat());
+        if (location != null) {
+            event.setLon(location.getLon());
+            event.setLat(location.getLat());
         }
-        if (updateEvent.getPaid() != null) {
-            event.setPaid(updateEvent.getPaid());
+        if (paid != null) {
+            event.setPaid(paid);
         }
-        if (updateEvent.getParticipantLimit() != null) {
-            event.setParticipantLimit(updateEvent.getParticipantLimit());
+        if (participantLimit != null) {
+            event.setParticipantLimit(participantLimit);
         }
-        if (updateEvent.getRequestModeration() != null) {
-            event.setRequestModeration(updateEvent.getRequestModeration());
+        if (requestModeration != null) {
+            event.setRequestModeration(requestModeration);
         }
-        if (updateEvent.getTitle() != null) {
-            event.setTitle(updateEvent.getTitle());
+        if (title != null) {
+            event.setTitle(title);
         }
         return event;
     }

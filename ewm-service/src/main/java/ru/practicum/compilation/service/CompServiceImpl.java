@@ -13,6 +13,7 @@ import ru.practicum.compilation.dto.UpdateCompilationRequest;
 import ru.practicum.compilation.model.Compilation;
 import ru.practicum.compilation.repository.CompRepository;
 import ru.practicum.event.EventMapper;
+import ru.practicum.event.service.EventStatsService;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.repository.EventRepository;
@@ -31,6 +32,7 @@ public class CompServiceImpl implements CompService {
     private final CompRepository compRepository;
     private final EventRepository eventRepository;
     private final RequestRepository requestRepository;
+    private final EventStatsService statsService;
 
     @Transactional
     @Override
@@ -38,11 +40,8 @@ public class CompServiceImpl implements CompService {
         Set<Integer> eventIds = new HashSet<>(newCompilationDto.getEvents());
         List<Event> events = eventRepository.findAllByIds(eventIds);
         Compilation saveComp = compRepository.save(CompMapper.mapToCompilation(newCompilationDto, events));
-        List<EventShortDto> eventShortDtos = new ArrayList<>();
-        for (Event event : saveComp.getEvents()) {
-            Collection<Request> confirmList = requestRepository.findAllByEventAndStatus(event, RequestState.CONFIRMED);
-            eventShortDtos.add(EventMapper.mapToShortDto(event, confirmList.size()));
-        }
+        Collection<Request> confirmList = new ArrayList<>();
+        List<EventShortDto> eventShortDtos = EventMapper.getListOfEventShortDto(saveComp.getEvents(), confirmList);
         log.info("Создана новая коллекция: {}", saveComp);
         return CompMapper.mapToDto(saveComp, eventShortDtos);
     }
@@ -70,11 +69,10 @@ public class CompServiceImpl implements CompService {
             oldComp.get().setEvents(newEvents);
         }
         Compilation newComp = compRepository.save(CompMapper.mapUpdateComp(updateComp, oldComp.get()));
-        List<EventShortDto> eventShortDtos = new ArrayList<>();
-        for (Event event : newComp.getEvents()) {
-            Collection<Request> confirmList = requestRepository.findAllByEventAndStatus(event, RequestState.CONFIRMED);
-            eventShortDtos.add(EventMapper.mapToShortDto(event, confirmList.size()));
-        }
+        Collection<Request> confirmList = requestRepository.findAllByEventInAndStatus(
+                newComp.getEvents(),
+                RequestState.CONFIRMED);
+        List<EventShortDto> eventShortDtos = EventMapper.getListOfEventShortDto(newComp.getEvents(), confirmList);
         log.info("Обновлена подборка ID = {}. {}", compId, newComp);
         return CompMapper.mapToDto(newComp, eventShortDtos);
     }
@@ -85,19 +83,17 @@ public class CompServiceImpl implements CompService {
         Collection<Compilation> comp;
         if (pinned == null) {
             comp = compRepository.findAll(pageable).getContent();
-        } else if (pinned) {
-            comp = compRepository.findAllByPinnedIs(true, pageable).getContent();
         } else {
-            comp = compRepository.findAllByPinnedIs(false, pageable).getContent();
+            comp = compRepository.findAllByPinnedIs(pinned, pageable).getContent();
         }
         Collection<CompilationDto> compDtoList = new ArrayList<>();
         for (Compilation compilation : comp) {
-            List<EventShortDto> eventShortDtos = new ArrayList<>();
-            for (Event event : compilation.getEvents()) {
-                Collection<Request> confirmList = requestRepository.findAllByEventAndStatus(event, RequestState.CONFIRMED);
-                eventShortDtos.add(EventMapper.mapToShortDto(event, confirmList.size()));
-            }
-            compDtoList.add(CompMapper.mapToDto(compilation, eventShortDtos));
+            Collection<Request> confirmList = requestRepository.findAllByEventInAndStatus(
+                    compilation.getEvents(),
+                    RequestState.CONFIRMED);
+            List<EventShortDto> eShortDtos = EventMapper.getListOfEventShortDto(compilation.getEvents(), confirmList);
+            getListEventDtoWithStats(eShortDtos);
+            compDtoList.add(CompMapper.mapToDto(compilation, eShortDtos));
         }
         log.info("Получен список колекций. Параметр pinned = {}", pinned);
         return compDtoList;
@@ -109,13 +105,21 @@ public class CompServiceImpl implements CompService {
         if (compilation.isEmpty()) {
             throw new ObjectNotFoundException("Подборки с ID = " + compId + " не найдено.");
         }
-        List<EventShortDto> eventShortDtos = new ArrayList<>();
-        for (Event event : compilation.get().getEvents()) {
-            Collection<Request> confirmList = requestRepository.findAllByEventAndStatus(event, RequestState.CONFIRMED);
-            eventShortDtos.add(EventMapper.mapToShortDto(event, confirmList.size()));
+        Collection<Request> confirmList = requestRepository.findAllByEventInAndStatus(
+                compilation.get().getEvents(),
+                RequestState.CONFIRMED);
+        List<EventShortDto> eShortDtos = EventMapper.getListOfEventShortDto(compilation.get().getEvents(), confirmList);
+        for (EventShortDto dto : eShortDtos) {
+            dto.setViews(statsService.getStatViewEvents(dto.getId()));
         }
         log.info("Получена колекция ID = {}.", compId);
-        return CompMapper.mapToDto(compilation.get(), eventShortDtos);
+        return CompMapper.mapToDto(compilation.get(), eShortDtos);
+    }
+
+    private void getListEventDtoWithStats(List<EventShortDto> eventsDtos) {
+        for (EventShortDto dto : eventsDtos) {
+            dto.setViews(statsService.getStatViewEvents(dto.getId()));
+        }
     }
 
 }

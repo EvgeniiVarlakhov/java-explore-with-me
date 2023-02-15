@@ -1,6 +1,6 @@
 package ru.practicum.request;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -14,13 +14,9 @@ import java.util.Collection;
 
 @RestController
 @Validated
+@RequiredArgsConstructor
 public class RequestController {
     private final RequestService service;
-
-    @Autowired
-    public RequestController(RequestService service) {
-        this.service = service;
-    }
 
     @GetMapping("/users/{userId}/requests")
     public Collection<ParticipationRequestDto> getUsersRequests(
