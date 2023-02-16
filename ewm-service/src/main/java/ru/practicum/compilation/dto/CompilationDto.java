@@ -1,0 +1,19 @@
+package ru.practicum.compilation.dto;
+
+import lombok.*;
+import ru.practicum.event.dto.EventShortDto;
+
+import java.util.List;
+
+@ToString
+@Setter
+@Getter
+@AllArgsConstructor
+@EqualsAndHashCode
+@RequiredArgsConstructor
+public class CompilationDto {
+    private List<EventShortDto> events;
+    private Integer id;
+    private Boolean pinned;
+    private String title;
+}
