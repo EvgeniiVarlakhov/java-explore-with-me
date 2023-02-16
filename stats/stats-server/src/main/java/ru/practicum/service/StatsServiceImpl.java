@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -33,12 +33,12 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
-    public Collection<ViewStatsDto> getStatsWithParams(
+    public List<ViewStatsDto> getStatsWithParams(
             String start, String end, ArrayList<String> uris, String unique) {
         LocalDateTime startTime = validateTimeFormat(start);
         LocalDateTime endTime = validateTimeFormat(end);
         Boolean status = validateUniqueParam(unique);
-        Collection<ViewStatsDto> viewStatsDtos;
+        List<ViewStatsDto> viewStatsDtos;
 
         if (uris != null) {
             if (status) {
