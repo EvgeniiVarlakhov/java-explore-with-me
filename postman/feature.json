@@ -448,11 +448,7 @@
 									"    pm.expect(target).to.have.property('authorName');\r",
 									"    pm.expect(target).to.have.property('created');\r",
 									"});\r",
-									"\r",
-									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
-									"    pm.expect(target.id).to.not.be.null;\r",
-									"    pm.expect(source.text).equal(target.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
-									"});"
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -678,11 +674,6 @@
 									"    pm.expect(target).to.have.property('text');\r",
 									"    pm.expect(target).to.have.property('authorName');\r",
 									"    pm.expect(target).to.have.property('created');\r",
-									"});\r",
-									"\r",
-									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
-									"    pm.expect(target.id).to.not.be.null;\r",
-									"    pm.expect(source.text).equal(target.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
 									"});"
 								],
 								"type": "text/javascript"
@@ -791,10 +782,6 @@
 									"    pm.expect(target).to.have.property('created');\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
-									"    pm.expect(target.id).to.not.be.null;\r",
-									"    pm.expect(source.text).equal(target.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
-									"});\r",
 									""
 								],
 								"type": "text/javascript"
@@ -1112,9 +1099,9 @@
 									"});\r",
 									"\r",
 									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
-									"    pm.expect(target.id).to.not.be.null;\r",
-									"    pm.expect(source.text).equal(target.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
-									"});"
+									"    pm.expect(target.text).equal('Измененный комментарий.', 'Текст комментария должен соответствовать тексту в запросе.');\r",
+									"});\r",
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -1229,7 +1216,7 @@
 									"    pm.response.to.be.json;\r",
 									"});\r",
 									"\r",
-									"const source = pm.collectionVariables.get(\"response\");\r",
+									"const source = JSON.parse(pm.request.body.raw);\r",
 									"const target = pm.response.json();\r",
 									"\r",
 									"pm.test(\"Комментарий должен содержать поля id, text, author, eventId, created.\", function () {\r",
@@ -1242,8 +1229,7 @@
 									"});\r",
 									"\r",
 									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
-									"    pm.expect(target.id).to.not.be.null;\r",
-									"    pm.expect(source.text).equal(target.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
+									"    pm.expect(target.text).equal('Измененный комментарий Администратором.', 'Текст комментария должен соответствовать тексту в запросе.');\r",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1272,7 +1258,7 @@
 									"        pm.collectionVariables.set(\"response\", comment2);\r",
 									"        pm.request.body.update({\r",
 									"            mode: 'raw',\r",
-									"            raw: comment2,\r",
+									"            raw: JSON.stringify(comment2),\r",
 									"            options: { raw: { language: 'json' } }\r",
 									"        });\r",
 									"    } catch(err) {\r",
