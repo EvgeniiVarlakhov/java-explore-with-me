@@ -451,7 +451,7 @@
 									"\r",
 									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
 									"    pm.expect(target.id).to.not.be.null;\r",
-									"    pm.expect(target.text).equal(source.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
+									"    pm.expect(source.text).equal(target.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
 									"});"
 								],
 								"type": "text/javascript"
@@ -671,7 +671,7 @@
 									"\r",
 									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
 									"    pm.expect(target.id).to.not.be.null;\r",
-									"    pm.expect(target.text).equal(source.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
+									"    pm.expect(source.text).equal(target.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
 									"});"
 								],
 								"type": "text/javascript"
@@ -776,7 +776,7 @@
 									"\r",
 									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
 									"    pm.expect(target.id).to.not.be.null;\r",
-									"    pm.expect(target.text).equal(source.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
+									"    pm.expect(source.text).equal(target.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
 									"});\r",
 									""
 								],
@@ -1090,7 +1090,7 @@
 									"\r",
 									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
 									"    pm.expect(target.id).to.not.be.null;\r",
-									"    pm.expect(target.text).equal(source.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
+									"    pm.expect(source.text).equal(target.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1213,7 +1213,7 @@
 									"\r",
 									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
 									"    pm.expect(target.id).to.not.be.null;\r",
-									"    pm.expect(target.text).equal(source.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
+									"    pm.expect(source.text).equal(target.text, 'Текст комментария должен соответствовать тексту в запросе.');\r",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1277,7 +1277,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\"text\":\"Измененный коммент Администратором.\"}",
+							"raw": "{{request_body}}",
 							"options": {
 								"raw": {
 									"language": "json"
