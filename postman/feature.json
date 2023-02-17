@@ -500,6 +500,11 @@
 							}
 						}
 					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"accept": true
+						}
+					},
 					"request": {
 						"method": "GET",
 						"header": [
