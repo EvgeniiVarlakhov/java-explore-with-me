@@ -37,7 +37,7 @@ public class CommentController {
     }
 
     @GetMapping("/admin/events/{eventId}/comments")
-    public Collection<CommentFullDto> getAllCommentsEventForUser(
+    public Collection<CommentFullDto> getAllCommentsEventForAdmin(
             @PathVariable int eventId,
             @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero int from,
             @RequestParam(name = "size", defaultValue = "10") @Positive int size) {

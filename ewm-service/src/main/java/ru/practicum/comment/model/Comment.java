@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 @AllArgsConstructor
-@EqualsAndHashCode
 @NoArgsConstructor
 public class Comment {
 

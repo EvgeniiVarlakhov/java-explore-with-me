@@ -43,10 +43,10 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public Collection<CommentShortDto> getAllCommentsEventByUser(int userId, int eventId, int from, int size) {
-        validateUser(userId);
+        User author = validateUser(userId);
         validateEvent(eventId);
         Pageable pageable = PageRequest.of(from / size, size);
-        Collection<Comment> comments = comRepository.findAllByEventId(eventId, pageable).getContent();
+        Collection<Comment> comments = comRepository.findAllByEventIdAndAuthor(eventId, author, pageable).getContent();
         Collection<CommentShortDto> listDto = CommentMapper.mapToListShortDtos(comments);
         log.info("Получен список комментариев для события ID = {}. {}", eventId, listDto);
         return listDto;
